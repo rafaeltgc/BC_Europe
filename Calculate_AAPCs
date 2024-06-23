@@ -1,0 +1,51 @@
+/*
+###############################
+#     To calculage AAPCs      #
+###############################
+*/
+
+/* Label for the files to be created */
+%let label = Invasive;
+
+/* Directory where Joinpoint zip file was unzipped */
+%let dir = ...;
+
+/* Directory for input and output files */
+%let dir2 = ...;
+
+/* Sample data file */
+%let sampleData = &dir2.invasive.txt;
+
+/* Session file */
+%let session_file = &dir2.invasive_Session.ini;
+
+/* Options file */
+%let op_file = &dir2.invasive_Options.ini;
+
+/* Joinpoint program */
+%let jpexe = &dir.jpCommand.exe;
+
+/* Input files to be created to call Joinpoint */
+%let input_file   = &dir.&label..JPRun.ini;
+
+/* Output file of Joinpoint */
+%let outFile = &dir2.&label..jpo;
+
+/* Input file for Joinpoint */
+filename file0 "&input_file";
+data _NULL_;
+  file file0;
+  put "[Joinpoint Input Files]";
+  put "Session File=&session_file";
+  put "Output File=&outFile";
+  put "Export Options File=&op_file";
+  put "Run Options File=&op_file";
+run;
+
+/* Call Joinpoint */
+X &jpexe &input_file;
+
+/* Get some of the files created by Joinpoint and read them into SAS data sets */
+%let result_file1 = &dir2.&label..apcexport.txt;
+%let result_file2 = &dir2.&label..report.txt;
+%let result_file3 = &dir2.&label..permtestexport.txt;
