@@ -1,0 +1,76 @@
+install.packages('backports')
+install.packages("mice", dependencies = TRUE)
+install.packages("VIM", dependencies = TRUE)
+install.packages("survival", dependencies = TRUE)
+install.packages("splines", dependencies = TRUE)
+
+library (mice)
+library (VIM)
+library (survival)
+library (splines)
+library (lattice)
+
+#Import data
+dat_BC <- read.csv('...csv', header=T)
+
+str(dat_BC)
+
+# Korrektur der fehlenden Werte und der falschen Zuordnungen
+dat_BC$stage <- factor(dat_BC$stage)
+dat_BC$patid <- factor(dat_BC$patid)
+dat_BC$sex <- factor(dat_BC$sex)
+
+str(dat_BC)
+
+# ordered factors einfügen
+dat_BC$stage <- factor(dat_BC$stage,order=TRUE)
+
+dat_BC$acm_time <- nelsonaalen(dat_BC, futime, death_event)
+
+cor.test(dat_BC$acm_time, dat_BC$futime)
+
+predictor_matrix <- quickpred(dat_BC, mincor = 0, minpuc = 0, include = "", exclude = "",
+          method = "pearson")
+
+# die Variablen werden nie fuer Vorhersagen genommen
+predictor_matrix[ ,"patid"] <- 0 
+predictor_matrix[ ,"futime"] <- 0
+
+#die Variable wird nicht imputiert
+#predictor_matrix[ "SEQNUM",] <- 0
+
+names(dat_BC)
+str(dat_BC)
+
+
+#Sample run with smaller dataset
+mysample <- dat_BC[sample(1:nrow(dat_BC), 1000, replace=FALSE),] 
+#Imputation   
+#Methods: logreg - 0/1, pmm - linear,polr - ordered, polyreg - 0,3,6 
+nach_imp <- mice(dat_BC, pred=predictor_matrix, 
+                 method=c('', '', 'pmm', '',
+                          '', '', '', ''),                                              
+                 m=15, maxit=10, seed=65712)
+
+plot(nach_imp) # Konvergiert die imputation?
+summary(nach_imp)
+
+nach_imp$imp
+nach_imp$meth
+nach_imp$loggedEvents
+
+analyse <- complete(nach_imp, 'long', include=F)
+
+
+str(analyse)
+
+#damit sas numerische vars erkennt
+analyse$.imp <- as.numeric(analyse$.imp)
+analyse$.id <- NULL
+analyse$acm_time <- NULL
+
+str(analyse)
+
+write.csv(analyse, file = "....csv", quote=F, na="")
+write.csv(predictor_matrix, file = "...csv", quote=F, na="")
+
