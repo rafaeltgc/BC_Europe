@@ -1,0 +1,21 @@
+install.packages("metafor")
+library(metafor) 
+
+data <- data.frame( country = c("X", "Y", "Z"),
+
+est = c(..., ..., ...),
+
+lower_ci = c(..., ..., ...),
+upper_ci = c(..., ..., ...))
+
+
+data$se <- (data$upper_ci - data$lower_ci) / (2 * 1.96)
+
+
+res <- rma(yi = data$est, sei = data$se, method = "DL", weighted = FALSE)
+
+
+summary(res) 
+
+
+forest(res, slab = data$country)
